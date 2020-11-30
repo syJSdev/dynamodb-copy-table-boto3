@@ -1,40 +1,50 @@
-# Make copy of DynamoDB table
-
-Author: Jon Austen
-
-Warning:  don't use Python 2.x
+# DynamoDB table cloning
 
 Requires :
 
-    $ curl -O https://bootstrap.pypa.io/get-pip.py
-    $ python3 get-pip.py --user
-    $ pip3 install awscli --upgrade --user
+- python 3
+- aws cli & dynamo-local (for the local)
 
-### HOWTO
+### HOW TO
 
-Copy a dynamo-local with
+> Copy a dynamo-local with
 
-    python3 dynamo_copy_table.py atable copy-atable true
+```bash
+USE_LOCAL=yes python3 dynamo_copy_table.py source-table dest-table
+```
 
-This is a python script to make copy of AWS Dynamodb tables using boto3 library.
+> Copy a online dynamo db:
 
- Copy a online dynamo db:
-
-    python3 dynamo_copy_table.py atable copy-atable false
-
+ - copy with table creation
+```bash
+ACCESS_KEY_ID=aws_access_key_id SECRET_ACCESS_KEY=aws_secret_access_key REGION=ap-east-1 python3 dynamo_copy_table.py source-table dest-table
+```
+ - skip table creation
+```bash
+SKIP_CREATION=yes ACCESS_KEY_ID=aws_access_key_id SECRET_ACCESS_KEY=aws_secret_access_key REGION=ap-east-1 python3 dynamo_copy_table.py source-table dest-table
+```
 
 
 ### Run your own local DynamoDB-Local:
 
-    docker run -p 8000:8000 --name dynamodb-local --restart unless-stopped -d dwmkerr/dynamodb -sharedDb
+- aws-cli
 
-    aws dynamodb list-tables --endpoint-url http://192.168.99.100:8000
+```bash
+curl -O https://bootstrap.pypa.io/get-pip.py
+python3 get-pip.py --user
+pip3 install awscli --upgrade --user
+```
 
-    aws dynamodb create-table --table-name Music --attribute-definitions AttributeName=Artist,AttributeType=S AttributeName=SongTitle,AttributeType=S --key-schema AttributeName=Artist,KeyType=HASH AttributeName=SongTitle,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1
+- dynamo-local
 
+```bash
+docker run -p 8000:8000 --name dynamodb-local --restart unless-stopped -d dwmkerr/dynamodb -sharedDb
+```
 
+- table
 
-### NOTES
+```bash
+aws dynamodb list-tables --endpoint-url http://localhost:8000
 
-https://stackoverflow.com/questions/31378347/how-to-get-the-row-count-of-a-table-instantly-in-dynamodb
-
+aws dynamodb create-table --table-name Music --attribute-definitions AttributeName=Artist,AttributeType=S AttributeName=SongTitle,AttributeType=S --key-schema AttributeName=Artist,KeyType=HASH AttributeName=SongTitle,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1
+```
