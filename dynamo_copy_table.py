@@ -7,7 +7,7 @@ import itertools
 
 spinner = itertools.cycle(['-', '/', '|', '\\'])
 
-localDynamoHost='http://192.168.99.100:8000'
+localDynamoHost='http://localhost:8000'
 
 def copy_items(src_table, dst_table, client, segment, total_segments):
     # copy over item
@@ -33,11 +33,12 @@ def copy_items(src_table, dst_table, client, segment, total_segments):
             })
 
         print("Process {0} put {1} items".format(segment, item_count))
-        client.batch_write_item(
-            RequestItems={
-               dst_table: batch
-            }
-        )
+        if item_count > 0:
+            client.batch_write_item(
+                RequestItems={
+                dst_table: batch
+                }
+            )
 
 
 def create_table(src_table, dst_table, client):
@@ -133,18 +134,20 @@ if __name__ == "__main__":
 
     table_1 = sys.argv[1]
     table_2 = sys.argv[2]
-    isLocal = sys.argv[3]
-    # defaults to us-west-2
-    region = os.getenv('AWS_DEFAULT_REGION', os.getenv('AWS_REGION', 'us-west-2'))
+    skipCreation = os.getenv('SKIP_CREATION', False)
+    isLocal = os.getenv('USE_LOCAL', False)
 
     if not isLocal:
-        iam_role = boto3.session.Session(profile_name='default')
+        keyID = os.getenv('ACCESS_KEY_ID')
+        secretKey = os.getenv('SECRET_ACCESS_KEY')
+        region = os.getenv('REGION', 'us-east-1')
+        iam_role = boto3.session.Session(aws_access_key_id=keyID,aws_secret_access_key=secretKey,region_name=region)
         db_client = iam_role.client('dynamodb')
     else:
         db_client = boto3.client('dynamodb', endpoint_url=localDynamoHost)
 
-
-    create_table(table_1, table_2, db_client)
+    if not skipCreation:
+        create_table(table_1, table_2, db_client)
 
     pool_size = 4  # tested with 4, took 5 minutes to copy 150,000+ items
     pool = []
